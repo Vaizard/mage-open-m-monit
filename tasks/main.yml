@@ -1,0 +1,37 @@
+---
+
+- name: Add nodesource apt_keys
+  apt_key:
+    url: "https://deb.nodesource.com/gpgkey/nodesource.gpg.key"
+    state: present
+
+- apt_repository:
+    repo: "deb https://deb.nodesource.com/node_7.x {{ ansible_distribution_release }} main"
+    state: present
+
+
+- name: Install open-m-monit dependencies
+  action: apt pkg={{item}} state=latest update_cache=yes
+  with_items:
+   - nodejs
+  
+- name: Clone open-m-monit from github
+  git: repo=https://github.com/antoniopuero/open-m-monit dest=/opt/open-m-monit version=HEAD
+
+- name: Call npm install
+  shell: npm install
+  args:
+    chdir: /opt/open-m-monit
+
+- name: Install open-m-monit's config file
+  template:
+    src: config.j2
+    dest: /opt/open-m-monit/config.json
+
+# TODO
+# - add authentication to open-m-monit
+#   - etither put nginx infront
+#   - or https://github.com/antoniopuero/open-m-monit/compare/master...consenlabs:master
+# - setup the cluster
+#   (list all monit instances within a cluster, for containers setup iptables so that mmonit gets the data
+# - add constraints to monit nodes (only mmonit ip should be allowed to connect?)
